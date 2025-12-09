@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Demo Shop - Pay with Alipay</title>
+  <style>
+    body { font-family: Arial; padding: 20px; background: #f8f8f8; text-align: center; }
+    button { padding: 15px 30px; font-size: 18px; background: #00aaee; color: white; border: none; border-radius: 8px; margin-top: 50px; }
+    #status { margin-top: 30px; font-size: 20px; color: #333; }
+  </style>
+</head>
+<body>
+  <h1>My Mini Shop</h1>
+  <p>Lotto Ticket</p>
+  <h2>14.00 MZN (~0.01 CNY test)</h2>
+  
+  <button id="payBtn">Pay with Alipay</button>
+  <div id="status"></div>
+
+  <script>
+    document.getElementById('payBtn').onclick = function() {
+      this.disabled = true;
+      this.textContent = 'Waiting for Alipay...';
+
+      // Send request to Mini Program
+      window.parent.postMessage({
+        action: 'PAY_NOW',
+        amount: '0.01',
+        currency: 'CNY',
+        reason: 'Lotto ticket'
+      }, '*');
+
+      document.getElementById('status').innerHTML = 'Opening Alipay...';
+    };
+
+    // Listen for result from Mini Program
+    window.addEventListener('message', function(e) {
+      const data = e.data;
+      if (data.type === 'PAY_RESULT') {
+        if (data.success) {
+          document.getElementById('status').innerHTML = 
+            '<span style="color:green">Payment Successful!</span><br>' + 
+            'Trade No: ' + (data.data.tradeNo || 'N/A');
+        } else {
+          document.getElementById('status').innerHTML = 
+            '<span style="color:red">Payment Failed</span><br>' + 
+            data.error?.errorMessage;
+          document.getElementById('payBtn').disabled = false;
+          document.getElementById('payBtn').textContent = 'Try Again';
+        }
+      }
+    });
+  </script>
+</body>
+</html>
