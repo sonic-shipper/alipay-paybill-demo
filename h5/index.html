@@ -18,39 +18,82 @@
   <button id="payBtn">Pay with Alipay</button>
   <div id="status"></div>
 
-  <script>
-    document.getElementById('payBtn').onclick = function() {
-      this.disabled = true;
-      this.textContent = 'Waiting for Alipay...';
+ <script>
+  // Detect Alipay Mini Program environment
+  function isAlipayMini() {
+    return navigator.userAgent.indexOf('MiniProgram') > -1 || navigator.userAgent.indexOf('AlipayClient') > -1;
+  }
 
-      // Send request to Mini Program
-      window.parent.postMessage({
-        action: 'PAY_NOW',
-        amount: '0.01',
-        currency: 'CNY',
-        reason: 'Lotto ticket'
-      }, '*');
+  // Wait for AlipayJSBridge to load (essential for H5+)
+  function setupBridge() {
+    if (window.AlipayJSBridge) {
+      onBridgeReady();
+    } else {
+      if (document.addEventListener) {
+        document.addEventListener('AlipayJSBridgeReady', onBridgeReady, false);
+      }
+    }
+  }
 
-      document.getElementById('status').innerHTML = 'Opening Alipay...';
+  function onBridgeReady() {
+    // Bridge is ready—enable button if in Mini Program
+    if (isAlipayMini()) {
+      document.getElementById('payBtn').disabled = false;
+      document.getElementById('payBtn').textContent = 'Pay with Alipay';
+    }
+  }
+
+  // Call payBill directly
+  function triggerPay() {
+    if (!window.AlipayJSBridge) {
+      alert('Alipay not ready—retry');
+      return;
+    }
+
+    var payBtn = document.getElementById('payBtn');
+    payBtn.disabled = true;
+    payBtn.textContent = 'Waiting for Alipay...';
+    document.getElementById('status').innerHTML = 'Opening Alipay...';
+
+    var params = {
+      businessID: "888888",
+      billReference: "TEST2025",
+      amount: "0.01",
+      currency: "CNY",
+      reason: "Demo payment from H5"
     };
 
-    // Listen for result from Mini Program
-    window.addEventListener('message', function(e) {
-      const data = e.data;
-      if (data.type === 'PAY_RESULT') {
-        if (data.success) {
-          document.getElementById('status').innerHTML = 
-            '<span style="color:green">Payment Successful!</span><br>' + 
-            'Trade No: ' + (data.data.tradeNo || 'N/A');
-        } else {
-          document.getElementById('status').innerHTML = 
-            '<span style="color:red">Payment Failed</span><br>' + 
-            data.error?.errorMessage;
-          document.getElementById('payBtn').disabled = false;
-          document.getElementById('payBtn').textContent = 'Try Again';
-        }
+    AlipayJSBridge.call('payBill', params, function(res) {
+      if (res.code === 10000 || res.resultCode === '9000') {  // Success codes
+        document.getElementById('status').innerHTML = 
+          '<span style="color:green">Payment Successful!</span><br>' + 
+          'Trade No: ' + (res.tradeNo || res.result.tradeNo || 'N/A');
+      } else {
+        document.getElementById('status').innerHTML = 
+          '<span style="color:red">Payment Failed</span><br>' + 
+          (res.errorMessage || JSON.stringify(res));
+        payBtn.disabled = false;
+        payBtn.textContent = 'Try Again';
       }
+    }, function(err) {
+      document.getElementById('status').innerHTML = 
+        '<span style="color:red">Payment Error</span><br>' + 
+        (err.errorMessage || JSON.stringify(err));
+      payBtn.disabled = false;
+      payBtn.textContent = 'Try Again';
     });
-  </script>
+  }
+
+  // Event listeners
+  document.addEventListener('DOMContentLoaded', function() {
+    setupBridge();
+    var payBtn = document.getElementById('payBtn');
+    payBtn.onclick = triggerPay;
+    if (!isAlipayMini()) {
+      payBtn.disabled = true;  // Disable outside Mini Program
+      document.getElementById('status').innerHTML = 'Run in Alipay Mini Program to pay';
+    }
+  });
+</script>
 </body>
 </html>
