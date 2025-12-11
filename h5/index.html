@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-  <title>Demo Shop - Pay with Alipay</title>
+  <title>Demo Shop - Pay with AlipayBridge</title>
   <style>
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 40px 20px; text-align: center; background: #f9f9f9; margin: 0; }
     h1 { font-size: 28px; margin-bottom: 10px; }
@@ -17,13 +17,13 @@
 
   <h1>My Mini Shop</h1>
   <p>Lotto Ticket</p>
-  <div class="price">14.00 MZN (~0.01 CNY test)</div>
+  <div class="price">1.00 MZN </div>
 
   <button id="payButton">Pay with Alipay</button>
   <div id="result"></div>
 
   <script>
-    // Only run inside Alipay Mini Program (H5+ or DSL web-view)
+    
     function isInAlipayMini() {
       return /MiniProgram/i.test(navigator.userAgent) || /AlipayClient/i.test(navigator.userAgent);
     }
@@ -45,12 +45,12 @@
         payButton.textContent = "Opening Alipay...";
         resultDiv.innerHTML = "Calling payBill...";
 
-        // YOUR WORKING PARAMETERS (keep exactly like this)
+      
         AlipayJSBridge.call('payBill', {
-          businessID: "900114",                    // ← This works in sandbox for many devs
+          businessID: "900114",                    
           billReference: window.crypto.randomUUID?.() || Date.now().toString(),
-          amount: "0.01",                           // 0.01 CNY = minimum allowed in sandbox
-          currency: "MZN",                          // MZN not supported in sandbox → use CNY
+          amount: "1",                           
+          currency: "MZN",                          
           reason: "Lotto Ticket Purchase"
         }, function (res) {
           payButton.textContent = "Pay with Alipay";
@@ -60,7 +60,7 @@
             resultDiv.innerHTML = `<span style="color:red">Payment Failed</span><br><br>${JSON.stringify(res, null, 2)}`;
           } else {
             resultDiv.innerHTML = `<span style="color:green">Payment SUCCESS!</span><br><br>${JSON.stringify(res, null, 2)}`;
-            // Optional: redirect to success page
+         
             // setTimeout(() => location.href = "/success.html", 3000);
           }
         });
